@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#1565C0</color>
+    <color name="colorPrimaryDark">#0D47A1</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="main_activity_bg_color">#607D8B</color>
+    <color name="button_bg_stroke_color">#FFFFFF</color>
+    <color name="button_bg_gradient_start_color">#20FFFFFF</color>
+    <color name="button_bg_gradient_end_color">#80FFFFFF</color>
+    <color name="button_text_color">#FFFFFF</color>
+    <color name="sign_up_edit_text_bg_color">#00897B</color>
+</resources>

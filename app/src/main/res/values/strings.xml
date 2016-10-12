@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Sample FB Login</string>
+    <string name="facebook_app_id">988851221223354</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="sign_in_facebook">Sign In with Facebook</string>
+    <string name="sign_in_with_google">Sign In with Google</string>
+    <string name="hint_first_name">First Name</string>
+    <string name="hint_last_name">Last Name</string>
+    <string name="hint_cell_phone_number">Cell Phone Number</string>
+    <string name="sign_up_submit">Submit</string>
+</resources>
