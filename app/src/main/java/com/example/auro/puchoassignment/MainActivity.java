@@ -8,17 +8,26 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.example.auro.puchoassignment.Fragments.SignInFragment;
+import com.example.auro.puchoassignment.Fragments.SignUpFragment;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -31,45 +40,55 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button mSignIn, mSignUp;
-    private ImageView mDialogClose;
-    private LinearLayout mSignInFacebook, mSignInGoogle;
+
     private static final ArrayList<String> sPermission = new ArrayList<>();
-    private Dialog mSignUpDialog;
+    private ViewPager mViewPager;
+    private TabLayout mTabLayout;
+    private CustomPagerAdapter mCustomPagerAdapter;
+    private Button mSignUp, mSignIn;
+    private LinearLayout mSignInFacebook, mSignInGoogle;
+    private EditText mSignInMobileNo, mSignInPassword;
+    private EditText mSignUpMobileNo, mSignUpPassword, mSignUpRePassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
-        setContentView(R.layout.activity_main);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         AppEventsLogger.activateApp(getApplication());
+        setContentView(R.layout.activity_main);
 
         init();
-        setOnClickListeners();
+        //setOnClickListeners();
+
 
     }
 
     private void init() {
 
-        mSignIn = (Button) findViewById(R.id.button_sign_in);
-        mSignUp = (Button) findViewById(R.id.button_sign_up);
-        mSignInFacebook = (LinearLayout) findViewById(R.id.button_sign_in_facebook);
-        mSignInGoogle = (LinearLayout) findViewById(R.id.button_sign_in_google);
-        mSignUpDialog = new Dialog(MainActivity.this, android.R.style.Theme_Holo_Dialog_NoActionBar);
+        mSignUp = (Button) findViewById(R.id.sign_up_submit);
+        mSignIn = (Button) findViewById(R.id.sign_in_submit);
 
-        mSignUpDialog.setContentView(R.layout.layout_dialog_sign_up);
-        WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
-        if (mSignUpDialog.getWindow() != null) {
-            layoutParams.copyFrom(mSignUpDialog.getWindow().getAttributes());
-            layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT;
-            layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
-            mSignUpDialog.getWindow().setAttributes(layoutParams);
-            Drawable drawable = ContextCompat.getDrawable(getApplicationContext(),R.drawable.bg_sign_up_dialog);
-            mSignUpDialog.getWindow().setBackgroundDrawable(drawable);
-        }
+        mSignInFacebook = (LinearLayout) findViewById(R.id.sign_in_facebook);
+        mSignInGoogle = (LinearLayout) findViewById(R.id.sign_in_google);
 
-        mDialogClose = (ImageView) mSignUpDialog.findViewById(R.id.button_dialog_close);
+        mSignInMobileNo = (EditText) findViewById(R.id.sign_in_mobile_no);
+        mSignInPassword = (EditText) findViewById(R.id.sign_in_password);
+        mSignUpMobileNo = (EditText) findViewById(R.id.sign_up_mobile_no);
+        mSignUpPassword = (EditText) findViewById(R.id.sign_up_password);
+        mSignUpRePassword = (EditText) findViewById(R.id.sign_up_re_password);
+
+        mViewPager = (ViewPager) findViewById(R.id.view_pager);
+        mTabLayout = (TabLayout) findViewById(R.id.tab_layout);
+
+        if (mCustomPagerAdapter == null)
+            mCustomPagerAdapter = new CustomPagerAdapter(MainActivity.this);
+
+        mViewPager.setAdapter(mCustomPagerAdapter);
+        mTabLayout.setupWithViewPager(mViewPager);
+        mTabLayout.setTabTextColors(
+                ContextCompat.getColor(getApplicationContext(),R.color.button_text_color_not_selected),
+                ContextCompat.getColor(getApplicationContext(),R.color.button_text_color_selected));
 
         sPermission.add("email");
         CallbackManager callbackManager = CallbackManager.Factory.create();
@@ -97,23 +116,41 @@ public class MainActivity extends AppCompatActivity {
 
     private void setOnClickListeners() {
 
+        mTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                mViewPager.setCurrentItem(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                mViewPager.setCurrentItem(tab.getPosition());
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+                mViewPager.setCurrentItem(tab.getPosition());
+            }
+        });
+
+        if (mSignIn != null)
         mSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 if (checkConnection()) {
-
+                    Toast.makeText(getApplicationContext(),"YAY!!!!",Toast.LENGTH_SHORT).show();
                 } else
-                    Toast.makeText(getApplicationContext(),"Not Connected to Internet",Toast.LENGTH_SHORT).show();
-
+                    Toast.makeText(getApplicationContext(),"NO INTERNET!!",Toast.LENGTH_SHORT).show();
             }
         });
 
         mSignUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                mSignUpDialog.show();
+                if (checkConnection()) {
+                    Toast.makeText(getApplicationContext(),"YAY!!!!",Toast.LENGTH_SHORT).show();
+                } else
+                    Toast.makeText(getApplicationContext(),"NO INTERNET!!",Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -121,28 +158,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (checkConnection()) {
-                    LoginManager.
-                            getInstance().
-                            logInWithReadPermissions(MainActivity.this, sPermission);
+                    LoginManager.getInstance().logInWithReadPermissions(MainActivity.this,sPermission);
                 } else
-                      Toast.makeText(getApplicationContext(),"Not Connected to Internet",Toast.LENGTH_SHORT).show();
-              }
-          });
+                    Toast.makeText(getApplicationContext(),"NO INTERNET!!",Toast.LENGTH_SHORT).show();
+            }
+        });
 
         mSignInGoogle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (checkConnection()) {
+                    Toast.makeText(getApplicationContext(),"YAY!!!!",Toast.LENGTH_SHORT).show();
+                } else
+                    Toast.makeText(getApplicationContext(),"NO INTERNET!!",Toast.LENGTH_SHORT).show();
             }
         });
 
-        mDialogClose.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mSignUpDialog != null)
-                    mSignUpDialog.cancel();
-            }
-        });
+
     }
 
     private boolean checkConnection() {
@@ -151,4 +183,6 @@ public class MainActivity extends AppCompatActivity {
 
         return ((networkInfo != null) && networkInfo.isConnectedOrConnecting());
     }
+
 }
+

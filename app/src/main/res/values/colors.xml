@@ -2,11 +2,15 @@
 <resources>
     <color name="colorPrimary">#1565C0</color>
     <color name="colorPrimaryDark">#0D47A1</color>
-    <color name="colorAccent">#FF4081</color>
-    <color name="main_activity_bg_color">#607D8B</color>
-    <color name="button_bg_stroke_color">#FFFFFF</color>
-    <color name="button_bg_gradient_start_color">#20FFFFFF</color>
-    <color name="button_bg_gradient_end_color">#80FFFFFF</color>
-    <color name="button_text_color">#FFFFFF</color>
+    <color name="colorAccent">#717A81</color>
+    <color name="main_activity_bg_color">#24313C</color>
+    <color name="button_bg_color_selected">#1AB188</color>
+    <color name="button_bg_color_not_selected">#435159</color>
+    <color name="button_text_color_selected">#FFFFFF</color>
+    <color name="button_text_color_not_selected">#717A81</color>
     <color name="sign_up_edit_text_bg_color">#00897B</color>
+    <color name="desc_header_color">#FFFFFF</color>
+    <color name="submit_button_color">#1AB188</color>
+    <color name="facebook_button_color">#3B5998</color>
+    <color name="google_button_color">#CF4C3C</color>
 </resources>
