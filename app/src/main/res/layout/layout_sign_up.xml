@@ -6,91 +6,58 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:background="@color/main_activity_bg_color">
 
-    <TextView
-        android:id="@+id/sign_up_header"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:gravity="center"
-        android:text="@string/sign_up"
-        android:textSize="@dimen/desc_header_size"
-        android:textColor="@android:color/white"/>
 
     <LinearLayout
-        android:id="@+id/sign_up_form"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:weightSum="3"
-        android:layout_marginTop="@dimen/button_margin_top"
-        android:layout_below="@+id/sign_up_header"
-        android:layout_centerInParent="true">
+        android:layout_marginTop="@dimen/form_margin_top"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true">
 
-        <android.support.design.widget.TextInputLayout
+        <EditText
+            android:id="@+id/sign_up_mobile_no"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="@dimen/text_input_layout_margin_top"
-            android:gravity="center"
-            app:hintTextAppearance="@style/TextLabel"
-            android:layout_weight="1">
-            <EditText
-                android:id="@+id/sign_up_mobile_no"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_edit_text"
-                android:hint="@string/hint_mobile_no"
-                android:textColor="@android:color/white"
-                android:padding="@dimen/edit_text_padding"
-                android:maxLength="@integer/mobile_no_max_length"
-                android:maxLines="1"
-                android:imeOptions="actionNext"
-                android:inputType="number"/>
-        </android.support.design.widget.TextInputLayout>
-
-        <android.support.design.widget.TextInputLayout
+            android:layout_weight="1"
+            android:hint="@string/hint_mobile_no"
+            android:textColor="@android:color/white"
+            android:background="@drawable/bg_edit_text"
+            android:padding="@dimen/edit_text_padding"
+            android:maxLength="@integer/mobile_no_max_length"
+            android:maxLines="1"
+            android:inputType="number"
+            android:imeOptions="actionNext"
+            android:textColorHint="@android:color/white"/>
+        <EditText
+            android:id="@+id/sign_up_password"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="@dimen/text_input_layout_margin_top"
-            android:gravity="center"
-            app:hintTextAppearance="@style/TextLabel"
-            android:layout_weight="1">
-            <EditText
-                android:id="@+id/sign_up_password"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_edit_text"
-                android:hint="@string/hint_password"
-                android:textColor="@android:color/white"
-                android:padding="@dimen/edit_text_padding"
-                android:maxLength="@integer/mobile_no_max_length"
-                android:maxLines="1"
-                android:imeOptions="actionNext"
-                android:inputType="textPassword"/>
-        </android.support.design.widget.TextInputLayout>
-
-        <android.support.design.widget.TextInputLayout
+            android:layout_weight="1"
+            android:hint="@string/hint_password"
+            android:background="@drawable/bg_edit_text"
+            android:textColor="@android:color/white"
+            android:padding="@dimen/edit_text_padding"
+            android:maxLength="@integer/mobile_no_max_length"
+            android:maxLines="1"
+            android:imeOptions="actionNext"
+            android:inputType="textPassword"
+            android:textColorHint="@android:color/white"/>
+        <EditText
+            android:id="@+id/sign_up_re_password"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="@dimen/text_input_layout_margin_top"
-            android:gravity="center"
-            app:hintTextAppearance="@style/TextLabel"
-            android:layout_weight="1">
-            <EditText
-                android:id="@+id/sign_up_re_password"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_edit_text"
-                android:hint="@string/hint_re_password"
-                android:textColor="@android:color/white"
-                android:padding="@dimen/edit_text_padding"
-                android:maxLength="@integer/mobile_no_max_length"
-                android:maxLines="1"
-                android:imeOptions="actionDone"
-                android:inputType="textPassword"/>
-        </android.support.design.widget.TextInputLayout>
+            android:layout_weight="1"
+            android:hint="@string/hint_re_password"
+            android:textColor="@android:color/white"
+            android:padding="@dimen/edit_text_padding"
+            android:maxLength="@integer/mobile_no_max_length"
+            android:maxLines="1"
+            android:imeOptions="actionDone"
+            android:inputType="textPassword"
+            android:textColorHint="@android:color/white"
+            android:background="@drawable/bg_edit_text"/>
 
     </LinearLayout>
 
@@ -105,5 +72,6 @@
         android:layout_alignParentBottom="true"
         android:textSize="@dimen/sign_up_hint_text_size"
         android:textAllCaps="false"/>
+
 
 </RelativeLayout>
