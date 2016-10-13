@@ -2,7 +2,11 @@ package com.example.auro.puchoassignment;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -19,6 +23,7 @@ import android.support.v4.view.ViewGroupCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -28,20 +33,27 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.example.auro.puchoassignment.Fragments.SignInFragment;
-import com.example.auro.puchoassignment.Fragments.SignUpFragment;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG_FACEBOOK = "TAG_FACEBOOK==>";
+    private static final String TAG_GOOGLE = "TAG_GOOGLE==>";
 
     private static final ArrayList<String> sPermission = new ArrayList<>();
     private ViewPager mViewPager;
@@ -49,9 +61,11 @@ public class MainActivity extends AppCompatActivity {
     private CustomPagerAdapter mCustomPagerAdapter;
     private Button mSignUp, mSignIn;
     private LinearLayout mSignInFacebook, mSignInGoogle;
-    //private ViewGroup
     private EditText mSignInMobileNo, mSignInPassword;
     private EditText mSignUpMobileNo, mSignUpPassword, mSignUpRePassword;
+    private CallbackManager mCallbackManager;
+    private String fName, lName, email;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,30 +76,40 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         init();
-        //setOnClickListeners();
+        setOnClickListeners();
+
 
 
     }
 
     private void init() {
 
-        mSignUp = (Button) findViewById(R.id.sign_up_submit);
-        mSignIn = (Button) findViewById(R.id.sign_in_submit);
-
-        mSignInFacebook = (LinearLayout) findViewById(R.id.sign_in_facebook);
-        mSignInGoogle = (LinearLayout) findViewById(R.id.sign_in_google);
-
-        mSignInMobileNo = (EditText) findViewById(R.id.sign_in_mobile_no);
-        mSignInPassword = (EditText) findViewById(R.id.sign_in_password);
-        mSignUpMobileNo = (EditText) findViewById(R.id.sign_up_mobile_no);
-        mSignUpPassword = (EditText) findViewById(R.id.sign_up_password);
-        mSignUpRePassword = (EditText) findViewById(R.id.sign_up_re_password);
-
         mViewPager = (ViewPager) findViewById(R.id.view_pager);
         mTabLayout = (TabLayout) findViewById(R.id.tab_layout);
 
+        ViewGroup signInLayout = (ViewGroup) getLayoutInflater().inflate(R.layout.layout_sign_in, mViewPager, false);
+        ViewGroup signUpLayout = (ViewGroup) getLayoutInflater().inflate(R.layout.layout_sign_up, mViewPager, false);
+
+        mSignIn = (Button) signInLayout.findViewById(R.id.sign_in_submit);
+        mSignUp = (Button) signUpLayout.findViewById(R.id.sign_up_submit);
+
+        mSignInFacebook = (LinearLayout) signInLayout.findViewById(R.id.sign_in_facebook);
+        mSignInGoogle = (LinearLayout) signInLayout.findViewById(R.id.sign_in_google);
+
+
+
+        mSignInMobileNo = (EditText) signInLayout.findViewById(R.id.sign_in_mobile_no);
+        mSignInPassword = (EditText) signInLayout.findViewById(R.id.sign_in_password);
+        mSignUpMobileNo = (EditText) signUpLayout.findViewById(R.id.sign_up_mobile_no);
+        mSignUpPassword = (EditText) signUpLayout.findViewById(R.id.sign_up_password);
+        mSignUpRePassword = (EditText) signUpLayout.findViewById(R.id.sign_up_re_password);
+
+        ArrayList<ViewGroup> layoutArray = new ArrayList<>();
+        layoutArray.add(signInLayout);
+        layoutArray.add(signUpLayout);
+
         if (mCustomPagerAdapter == null)
-            mCustomPagerAdapter = new CustomPagerAdapter(MainActivity.this);
+            mCustomPagerAdapter = new CustomPagerAdapter(MainActivity.this, layoutArray);
 
         mViewPager.setAdapter(mCustomPagerAdapter);
         mTabLayout.setupWithViewPager(mViewPager);
@@ -94,27 +118,69 @@ public class MainActivity extends AppCompatActivity {
                 ContextCompat.getColor(getApplicationContext(),R.color.button_text_color_selected));
 
         sPermission.add("email");
-        CallbackManager callbackManager = CallbackManager.Factory.create();
+        sPermission.add("public_profile");
 
-        LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+        mCallbackManager = CallbackManager.Factory.create();
+
+        LoginManager.getInstance().registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
-                Log.d("TAG_FACEBOOK==>","Success");
+                Log.d(TAG_FACEBOOK,"Success");
+                final String accessToken = loginResult.getAccessToken().getToken();
+                Log.i(TAG_FACEBOOK,"access token : " + accessToken);
+
+                GraphRequest graphRequest = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(JSONObject object, GraphResponse response) {
+                        Log.i(TAG_FACEBOOK,response.toString());
+                        try {
+                            extractInfo(object);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        LoginManager.getInstance().logOut();
+                    }
+                });
+                Bundle param = new Bundle();
+                param.putString("fields","first_name, last_name, email");
+                graphRequest.setParameters(param);
+                graphRequest.executeAsync();
             }
 
             @Override
             public void onCancel() {
 
-                Toast.makeText(getApplicationContext(),"Login Cancelled", Toast.LENGTH_SHORT).show();
+                Log.d(TAG_FACEBOOK,"Sign In Cancelled");
+                Toast.makeText(MainActivity.this,"Cancelled", Toast.LENGTH_SHORT).show();
 
             }
 
             @Override
             public void onError(FacebookException error) {
-                Toast.makeText(getApplicationContext(),error.getMessage(),Toast.LENGTH_SHORT).show();
+
+                Log.e(TAG_FACEBOOK,error.getCause().toString());
+                Toast.makeText(MainActivity.this,error.getMessage(),Toast.LENGTH_SHORT).show();
 
             }
         });
+    }
+
+    private void extractInfo(final JSONObject object) throws JSONException {
+
+        if (object != null) {
+            if (object.has("first_name"))
+                fName = object.getString("first_name");
+            if (object.has("last_name"))
+                lName = object.getString("last_name");
+            if (object.has("email"))
+                email = object.getString("email");
+
+            Log.i(TAG_FACEBOOK,"FIRST NAME: "+ fName);
+            Log.i(TAG_FACEBOOK,"LAST NAME: "+ lName);
+            Log.i(TAG_FACEBOOK,"EMAIL: "+ email);
+        }
+
     }
 
     private void setOnClickListeners() {
@@ -136,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        if (mSignIn != null)
+
         mSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -180,12 +246,20 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
     private boolean checkConnection() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
 
         return ((networkInfo != null) && networkInfo.isConnectedOrConnecting());
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d("TAG_FACEBOOK==>","Reached onActivity");
+        mCallbackManager.onActivityResult(requestCode,resultCode,data);
+    }
+
 
 }
 

@@ -54,7 +54,8 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true">
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true">
 
         <Button
             android:id="@+id/sign_in_submit"
@@ -90,7 +91,7 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_facebook_32"
+                    android:src="@drawable/ic_facebook"
                     android:layout_marginEnd="5dp"
                     android:layout_gravity="center"/>
 
@@ -116,7 +117,7 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_google_32"
+                    android:src="@drawable/ic_google"
                     android:layout_marginEnd="5dp"
                     android:layout_gravity="center"/>
 

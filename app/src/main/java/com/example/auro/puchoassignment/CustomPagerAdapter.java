@@ -24,15 +24,17 @@ import java.util.ArrayList;
 class CustomPagerAdapter extends PagerAdapter {
 
     private String[] mTabNames;
-    private LayoutInflater mLayoutInflater;
+    private ArrayList<ViewGroup> mLayoutArray;
 
-    CustomPagerAdapter(Context context) {
+    CustomPagerAdapter(Context context, ArrayList<ViewGroup> layoutArray) {
         if (context != null) {
             mTabNames = new String[]{
                     context.getString(R.string.sign_in),
                     context.getString(R.string.sign_up)};
+        }
 
-            mLayoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        if (layoutArray != null && layoutArray.size() > 0) {
+            mLayoutArray = layoutArray;
         }
 
     }
@@ -40,19 +42,8 @@ class CustomPagerAdapter extends PagerAdapter {
     @Override
     public Object instantiateItem(ViewGroup container, int position) {
 
-        View view;
-        switch (position) {
-            case 0:
-                view = mLayoutInflater.inflate(R.layout.layout_sign_in,container,false);
-                container.addView(view);
-                return view;
-            case 1:
-                view = mLayoutInflater.inflate(R.layout.layout_sign_up, container, false);
-                container.addView(view);
-                return view;
-            default:
-                return null;
-        }
+        container.addView(mLayoutArray.get(position));
+        return mLayoutArray.get(position);
     }
 
     @Override
