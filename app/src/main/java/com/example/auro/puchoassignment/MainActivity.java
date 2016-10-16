@@ -3,6 +3,7 @@ package com.example.auro.puchoassignment;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -55,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG_FACEBOOK = "TAG_FACEBOOK==>";
     private static final String TAG_GOOGLE = "TAG_GOOGLE==>";
 
+
     private static final ArrayList<String> sPermission = new ArrayList<>();
     private ViewPager mViewPager;
     private TabLayout mTabLayout;
@@ -70,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         FacebookSdk.sdkInitialize(getApplicationContext());
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         AppEventsLogger.activateApp(getApplication());
@@ -77,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
 
         init();
         setOnClickListeners();
+
+      //  generateHashKey();
 
 
 
@@ -179,6 +184,22 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG_FACEBOOK,"FIRST NAME: "+ fName);
             Log.i(TAG_FACEBOOK,"LAST NAME: "+ lName);
             Log.i(TAG_FACEBOOK,"EMAIL: "+ email);
+
+            final String userName = fName + " " + lName;
+
+
+            SharedPreferences sharedPreferences = getSharedPreferences(
+                    getString(R.string.pref_name),MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(
+                    getString(R.string.pref_user_name),userName);
+            editor.putString(
+                    getString(R.string.pref_user_email), email);
+            editor.apply();
+
+            moveToSignedInActivity();
+
+
         }
 
     }
@@ -258,6 +279,31 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d("TAG_FACEBOOK==>","Reached onActivity");
         mCallbackManager.onActivityResult(requestCode,resultCode,data);
+    }
+
+    private void generateHashKey(){
+        try{
+            PackageInfo info = getPackageManager().getPackageInfo("com.example.auro.puchoassignment", PackageManager.GET_SIGNATURES);
+            for (Signature signature : info.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                Log.d("KeyHash:",Base64.encodeToString(md.digest(), Base64.DEFAULT));
+
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+
+        } catch (NoSuchAlgorithmException e) {
+
+        }
+    }
+
+    private void moveToSignedInActivity() {
+
+
+        Intent intent = new Intent(MainActivity.this,SignedInActivity.class);
+        startActivity(intent);
+
+
     }
 
 

@@ -12,4 +12,12 @@
     <string name="hint_mobile_no">Mobile Number</string>
     <string name="hint_password">Password</string>
     <string name="hint_re_password">Re-type Password</string>
+
+    <string name="title_activity_splash_screen">SampleApp</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="pref_name">SignInPrefs</string>
+    <string name="pref_user_name">UserName</string>
+    <string name="pref_user_email">UserEmail</string>
+    <string name="pref_user_mobile">UserMobile</string>
 </resources>
