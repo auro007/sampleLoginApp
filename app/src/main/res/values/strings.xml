@@ -16,7 +16,7 @@
     <string name="title_activity_splash_screen">SampleApp</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
-    <string name="pref_name">SignInPrefs</string>
+    <string name="pref_name">MyPrefs</string>
     <string name="pref_user_name">UserName</string>
     <string name="pref_user_email">UserEmail</string>
     <string name="pref_user_mobile">UserMobile</string>

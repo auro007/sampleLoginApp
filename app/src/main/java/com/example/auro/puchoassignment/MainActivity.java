@@ -1,6 +1,5 @@
 package com.example.auro.puchoassignment;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,25 +7,16 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewGroupCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -43,6 +33,14 @@ import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG_FACEBOOK = "TAG_FACEBOOK==>";
     private static final String TAG_GOOGLE = "TAG_GOOGLE==>";
+    private static final int RC_GOOGLE_SIGN_IN = 123;
 
 
     private static final ArrayList<String> sPermission = new ArrayList<>();
@@ -66,27 +65,30 @@ public class MainActivity extends AppCompatActivity {
     private EditText mSignInMobileNo, mSignInPassword;
     private EditText mSignUpMobileNo, mSignUpPassword, mSignUpRePassword;
     private CallbackManager mCallbackManager;
-    private String fName, lName, email;
+    private String mUserName, mUserEmail, mUserMobile;
+    private int exitCount = 1;
+    private GoogleSignInOptions mGoogleSignInOptions;
+    private GoogleApiClient mGoogleApiClient;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         FacebookSdk.sdkInitialize(getApplicationContext());
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         AppEventsLogger.activateApp(getApplication());
         setContentView(R.layout.activity_main);
 
         init();
+        initFacebookSignIn();
+        initGoogleSignIn();
         setOnClickListeners();
 
       //  generateHashKey();
 
-
-
     }
 
+    // Initialize views
     private void init() {
 
         mViewPager = (ViewPager) findViewById(R.id.view_pager);
@@ -125,85 +127,88 @@ public class MainActivity extends AppCompatActivity {
         sPermission.add("email");
         sPermission.add("public_profile");
 
-        mCallbackManager = CallbackManager.Factory.create();
 
-        LoginManager.getInstance().registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
-            @Override
-            public void onSuccess(LoginResult loginResult) {
-                Log.d(TAG_FACEBOOK,"Success");
-                final String accessToken = loginResult.getAccessToken().getToken();
-                Log.i(TAG_FACEBOOK,"access token : " + accessToken);
-
-                GraphRequest graphRequest = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
-                    @Override
-                    public void onCompleted(JSONObject object, GraphResponse response) {
-                        Log.i(TAG_FACEBOOK,response.toString());
-                        try {
-                            extractInfo(object);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                        LoginManager.getInstance().logOut();
-                    }
-                });
-                Bundle param = new Bundle();
-                param.putString("fields","first_name, last_name, email");
-                graphRequest.setParameters(param);
-                graphRequest.executeAsync();
-            }
-
-            @Override
-            public void onCancel() {
-
-                Log.d(TAG_FACEBOOK,"Sign In Cancelled");
-                Toast.makeText(MainActivity.this,"Cancelled", Toast.LENGTH_SHORT).show();
-
-            }
-
-            @Override
-            public void onError(FacebookException error) {
-
-                Log.e(TAG_FACEBOOK,error.getCause().toString());
-                Toast.makeText(MainActivity.this,error.getMessage(),Toast.LENGTH_SHORT).show();
-
-            }
-        });
     }
 
-    private void extractInfo(final JSONObject object) throws JSONException {
+    // Initialize Facebook Sign In Components
+    private void initFacebookSignIn() {
 
-        if (object != null) {
-            if (object.has("first_name"))
-                fName = object.getString("first_name");
-            if (object.has("last_name"))
-                lName = object.getString("last_name");
-            if (object.has("email"))
-                email = object.getString("email");
+        if (mCallbackManager == null) {
+            mCallbackManager = CallbackManager.Factory.create();
 
-            Log.i(TAG_FACEBOOK,"FIRST NAME: "+ fName);
-            Log.i(TAG_FACEBOOK,"LAST NAME: "+ lName);
-            Log.i(TAG_FACEBOOK,"EMAIL: "+ email);
+            LoginManager.getInstance().registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
+                @Override
+                public void onSuccess(LoginResult loginResult) {
+                    Log.d(TAG_FACEBOOK, "Success");
+                    final String accessToken = loginResult.getAccessToken().getToken();
+                    Log.i(TAG_FACEBOOK, "access token : " + accessToken);
 
-            final String userName = fName + " " + lName;
+                    GraphRequest graphRequest = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                        @Override
+                        public void onCompleted(JSONObject object, GraphResponse response) {
+                            Log.i(TAG_FACEBOOK, response.toString());
+                            try {
+                                extractFBInfo(object);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
 
+                            LoginManager.getInstance().logOut();
+                        }
+                    });
+                    Bundle param = new Bundle();
+                    param.putString("fields", "first_name, last_name, email");
+                    graphRequest.setParameters(param);
+                    graphRequest.executeAsync();
+                }
 
-            SharedPreferences sharedPreferences = getSharedPreferences(
-                    getString(R.string.pref_name),MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putString(
-                    getString(R.string.pref_user_name),userName);
-            editor.putString(
-                    getString(R.string.pref_user_email), email);
-            editor.apply();
+                @Override
+                public void onCancel() {
 
-            moveToSignedInActivity();
+                    Log.d(TAG_FACEBOOK, "Sign In Cancelled");
+                    Toast.makeText(MainActivity.this, "Cancelled", Toast.LENGTH_SHORT).show();
 
+                }
 
+                @Override
+                public void onError(FacebookException error) {
+
+                    Log.e(TAG_FACEBOOK, error.getCause().toString());
+                    Toast.makeText(MainActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+
+                }
+            });
         }
 
     }
 
+    // Initialize Google Sign In Components
+    private void initGoogleSignIn() {
+
+        if (mGoogleSignInOptions == null) {
+            mGoogleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestEmail()
+                    .requestProfile()
+                    .build();
+
+            if (mGoogleApiClient == null) {
+                mGoogleApiClient = new GoogleApiClient.Builder(this)
+                        .enableAutoManage(this, new GoogleApiClient.OnConnectionFailedListener() {
+                            @Override
+                            public void onConnectionFailed(ConnectionResult connectionResult) {
+                                Toast.makeText(getApplicationContext(),connectionResult.getErrorMessage(),Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        })
+                        .addApi(Auth.GOOGLE_SIGN_IN_API, mGoogleSignInOptions)
+                        .build();
+            }
+        }
+
+
+    }
+
+    //  Define OnClickListeners for all the views
     private void setOnClickListeners() {
 
         mTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -258,16 +263,108 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (checkConnection()) {
-                    Toast.makeText(getApplicationContext(),"YAY!!!!",Toast.LENGTH_SHORT).show();
+                    Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+                    startActivityForResult(signInIntent,RC_GOOGLE_SIGN_IN);
                 } else
                     Toast.makeText(getApplicationContext(),"NO INTERNET!!",Toast.LENGTH_SHORT).show();
             }
         });
 
+    }
+
+    // Extract required information from Facebook response
+    private void extractFBInfo(final JSONObject object) throws JSONException {
+
+        String fName = null, lName = null;
+
+        if (object != null) {
+            if (object.has("first_name"))
+               fName = object.getString("first_name");
+            if (object.has("last_name"))
+               lName = object.getString("last_name");
+
+            if (!TextUtils.isEmpty(fName) && !TextUtils.isEmpty(lName))
+                mUserName = fName + " " + lName;
+
+            if (object.has("email"))
+                mUserEmail = object.getString("email");
+
+            if (TextUtils.isEmpty(mUserEmail))
+                Toast.makeText(getApplicationContext(),"Sorry! Couldn't sign in without an email address", Toast.LENGTH_SHORT).show();
+            else {
+
+                Log.i(TAG_FACEBOOK, "FIRST NAME: " + mUserName);
+                Log.i(TAG_FACEBOOK, "EMAIL: " + mUserEmail);
+
+
+                SharedPreferences sharedPreferences = getSharedPreferences(
+                        getString(R.string.pref_name), MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(
+                        getString(R.string.pref_user_name), mUserName);
+                editor.putString(
+                        getString(R.string.pref_user_email), mUserEmail);
+                editor.apply();
+
+                moveToSignedInActivity();
+            }
+        }
 
     }
 
+    //  Extract required information from Google response
+    private void extractGoogleInfo(GoogleSignInResult result) {
 
+        Log.d(TAG_GOOGLE,"Google Sign In Result Successful: " + result.isSuccess());
+        if (result.isSuccess()) {
+            GoogleSignInAccount account = result.getSignInAccount();
+
+            if (!TextUtils.isEmpty(account.getDisplayName())) {
+                Log.i(TAG_GOOGLE, account.getDisplayName());
+                mUserName = account.getDisplayName();
+            }
+
+            if (!TextUtils.isEmpty(account.getEmail())) {
+                Log.i(TAG_GOOGLE,account.getEmail());
+                mUserEmail = account.getEmail();
+            }
+
+            if (TextUtils.isEmpty(mUserEmail))
+                Toast.makeText(getApplicationContext(),"Sorry! Couldn't sign in without an email address",Toast.LENGTH_SHORT).show();
+            else {
+                SharedPreferences sharedPreferences = getSharedPreferences(
+                        getString(R.string.pref_name), MODE_PRIVATE);
+
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(
+                        getString(R.string.pref_user_name), mUserName);
+                editor.putString(
+                        getString(R.string.pref_user_email), mUserEmail);
+                editor.apply();
+
+                moveToSignedInActivity();
+            }
+        }
+    }
+
+
+    //  Move to Signed In Activity
+    private void moveToSignedInActivity() {
+
+
+        Intent intent = new Intent(MainActivity.this,SignedInActivity.class);
+
+        if (!TextUtils.isEmpty(mUserName))
+            intent.putExtra(getString(R.string.pref_user_name),mUserName);
+
+        if (!TextUtils.isEmpty(mUserEmail))
+            intent.putExtra(getString(R.string.pref_user_email), mUserEmail);
+
+        startActivity(intent);
+        finish();
+    }
+
+    //  Check connectivity to a network before making any call
     private boolean checkConnection() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
@@ -275,12 +372,7 @@ public class MainActivity extends AppCompatActivity {
         return ((networkInfo != null) && networkInfo.isConnectedOrConnecting());
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d("TAG_FACEBOOK==>","Reached onActivity");
-        mCallbackManager.onActivityResult(requestCode,resultCode,data);
-    }
-
+    //  Generate HASH key required for FB app authentication
     private void generateHashKey(){
         try{
             PackageInfo info = getPackageManager().getPackageInfo("com.example.auro.puchoassignment", PackageManager.GET_SIGNATURES);
@@ -297,15 +389,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void moveToSignedInActivity() {
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
+        if (requestCode == RC_GOOGLE_SIGN_IN) {
 
-        Intent intent = new Intent(MainActivity.this,SignedInActivity.class);
-        startActivity(intent);
+            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+            extractGoogleInfo(result);
+            Auth.GoogleSignInApi.signOut(mGoogleApiClient)
+                    .setResultCallback(
+                            new ResultCallback<Status>() {
+                                @Override
+                                public void onResult(Status status) {
+                                    Log.i(TAG_GOOGLE,status.toString());
+                                }
+                            }
+                    );
 
-
+        } else {
+            mCallbackManager.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
-
+    @Override
+    public void onBackPressed() {
+        if  (exitCount == 2)
+            finish();
+        else {
+            Toast.makeText(MainActivity.this,"Press again to exit",Toast.LENGTH_SHORT).show();
+            exitCount++;
+        }
+    }
 }
 

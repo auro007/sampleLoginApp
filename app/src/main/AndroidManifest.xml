@@ -21,7 +21,7 @@
             android:windowSoftInputMode="adjustPan">
         </activity>
         <activity android:name=".SignedInActivity" />
-        <activity android:name=".SplashScreen">
+        <activity android:name=".SplashScreenActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
